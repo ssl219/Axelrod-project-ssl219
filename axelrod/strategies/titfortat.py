@@ -6,7 +6,8 @@ from axelrod.strategy_transformers import (
 )
 
 C, D = Action.C, Action.D
-
+import numpy as np
+import statsmodels.api as sm
 
 class TitForTat(Player):
     """
@@ -919,3 +920,99 @@ class RandomTitForTat(Player):
 
         self.act_random = True
         return opponent.history[-1]
+
+
+class ZDTitForTat(Player):
+    """
+    A player starts by cooperating and then follows by copying its
+    opponent (Tit-for-Tat). If there is sufficient evidence to claim
+    a linear relation between the two scores, indicating that the opponent 
+    may be playing a ZD strategy, revert to Always defect strategy.
+
+    Name:
+
+    - ZDTitForTat: Original name by Selena Linden
+    """
+
+    # These are various properties for the strategy
+    name = "Tit For Tat"
+    classifier = {
+        "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
+        "stochastic": False,
+        "long_run_time": False,
+        "inspects_source": False,
+        "manipulates_source": False,
+        "manipulates_state": False,
+    }
+
+    def __init__(self, conv_round, extra_round) -> None:
+        """
+        Parameters
+
+        :param conv_round: the number of rounds needed to ensure convergence 
+        to the Markov equilibrium
+
+        :param extra_round: number of rounds needed to fit a linear regression
+        ----------
+        """
+        super().__init__()
+        self.conv_round = conv_round
+        self.extra_round = extra_round
+        self.sx = np.zeros(200-conv_round)
+        self.sy = np.zeros(200-conv_round)
+        self.allD = False
+
+    def strategy(self, opponent: Player) -> Action:
+        """This is the actual strategy"""
+        # First move
+        if not self.history:
+            return C
+        # If we have already reverted to Always Defect strategy, defect
+        if self.allD:
+            return D
+
+        if len(self.history) >= self.conv_round:
+            # calculate the last round's scores and append to the vectors
+            if self.history[-1] == C:
+                if opponent.history[-1] == C:
+                    score_x = 3
+                    score_y = 3
+                else:
+                    score_x = 0
+                    score_y = 5
+            else:
+                if opponent.history[-1] == C:
+                    score_x = 5
+                    score_y = 0
+                else:
+                    score_x = 1
+                    score_y = 1
+            self.sx[len(self.history)-self.conv_round] = score_x
+            self.sy[len(self.history)-self.conv_round] = score_y
+
+        if (len(self.history) - self.conv_round) % self.extra_round == 0:
+            if len(self.history) > self.conv_round:
+                # fit linear regression to determine if opponent is playing ZD
+                # define predictor and response variables
+                resp = self.sx[:len(self.history)]
+                pred = self.sy[:len(self.history)]
+                # add constant to predictor variables
+                pred = sm.add_constant(pred)
+                # fit the linear regression model
+                model = sm.OLS(resp, pred).fit()
+                # extract p-value corresponding to the coefficient of pred
+                p_val = model.pvalues[1]
+                # if linear relationship is significant at the 1% significance
+                # level, then revert to always defect strategy
+                if p_val < 0.01:
+                    self.allD = True
+        # if linear relationship is not significant, continue playing TFT
+        if not self.allD:
+            # React to the opponent's last move
+            if opponent.history[-1] == D:
+                return D
+            return C
+
+        # if linear relationship is significant, defect
+        else:
+            return D
