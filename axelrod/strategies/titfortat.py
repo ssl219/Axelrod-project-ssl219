@@ -935,7 +935,7 @@ class ZDTitForTat(Player):
     """
 
     # These are various properties for the strategy
-    name = "Tit For Tat"
+    name = "ZD Tit For Tat"
     classifier = {
         "memory_depth": 1,  # Four-Vector = (1.,0.,1.,0.)
         "stochastic": False,
