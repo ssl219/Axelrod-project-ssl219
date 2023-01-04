@@ -961,7 +961,7 @@ class ZDTitForTat(Player):
         self.sx = np.zeros(200-conv_round)
         self.sy = np.zeros(200-conv_round)
         self.allD = False
-        self.whenallD = None
+        self.whenallD = "Never"
 
     def strategy(self, opponent: Player) -> Action:
         """This is the actual strategy"""
@@ -971,6 +971,8 @@ class ZDTitForTat(Player):
         # If we have already reverted to Always Defect strategy, defect
         if self.allD:
             return D
+        if len(self.history) == 199:
+            print(self.whenallD)
 
         if len(self.history) >= self.conv_round:
             # calculate the last round's scores and append to the vectors
@@ -1003,21 +1005,24 @@ class ZDTitForTat(Player):
                 model = sm.OLS(resp, pred).fit()
                 # extract p-value corresponding to the coefficient of pred
                 p_val = model.pvalues[1]
+                # print(f"P-value at round {len(self.history)}:", p_val)
                 # extract adjusted R squared
                 r_squared = model.rsquared_adj
+                print(f"R-squared at round {len(self.history)}:", r_squared)
                 # if linear relationship is significant at the 1% significance
                 # level and adjusted R squared is close to 1 or -1, then 
                 # revert to always defect strategy
-                if p_val < 0.01 and abs(1-r_squared) < 0.2:
+                # if p_val < 0.01 and abs(1-r_squared) < 0.5:
+                if p_val < 0.01:
                     self.allD = True
-                    self.whenallD = len(self.history)
+                    self.whenallD = len(self.history)      
         # if linear relationship is not significant, continue playing TFT
         if not self.allD:
             # React to the opponent's last move
             if opponent.history[-1] == D:
                 return D
             return C
-
         # if linear relationship is significant, defect
         else:
+            # print("yes")
             return D

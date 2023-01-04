@@ -15,12 +15,16 @@ def my_ZD_tournament(conv_round, extra_round):
         axl.ZDMischief(),
         axl.ZDSet2()
     ]
-    players = players + [ZDTitForTat(conv_round, extra_round)]
+    my_player = ZDTitForTat(conv_round, extra_round)
+    players = players + [my_player]
     players.append(axl.Random())
-    tournament = axl.Tournament(players)
+    tournament = axl.Tournament(players, turns=200, repetitions=5)
     results = tournament.play()
     plot = axl.Plot(results)
-    plot.boxplot()
+    _, ax = plt.subplots()
+    ax.set_title('Payoff')
+    ax.set_xlabel(f"Strategies")
+    plot.boxplot(ax=ax)
     plt.savefig(f"my_ZD_rankings_{conv_round}_{extra_round}.png")
     # p.show()
 
