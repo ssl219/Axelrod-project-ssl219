@@ -1008,14 +1008,14 @@ class ZDTitForTat(Player):
                 # print(f"P-value at round {len(self.history)}:", p_val)
                 # extract adjusted R squared
                 r_squared = model.rsquared_adj
-                print(f"R-squared at round {len(self.history)}:", r_squared)
+                # print(f"R-squared at round {len(self.history)}:", r_squared)
                 # if linear relationship is significant at the 1% significance
                 # level and adjusted R squared is close to 1 or -1, then 
                 # revert to always defect strategy
-                # if p_val < 0.01 and abs(1-r_squared) < 0.5:
-                if p_val < 0.01:
+                if p_val < 0.01 and abs(1-r_squared) < 0.8:
                     self.allD = True
-                    self.whenallD = len(self.history)      
+                    self.whenallD = len(self.history)
+                    # print("yes!")      
         # if linear relationship is not significant, continue playing TFT
         if not self.allD:
             # React to the opponent's last move
@@ -1024,5 +1024,4 @@ class ZDTitForTat(Player):
             return C
         # if linear relationship is significant, defect
         else:
-            # print("yes")
             return D

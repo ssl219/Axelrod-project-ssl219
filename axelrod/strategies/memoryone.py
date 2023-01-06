@@ -349,3 +349,18 @@ class ReactivePlayer(MemoryOnePlayer):
     def __init__(self, probabilities: Tuple[float, float]) -> None:
         four_vector = (*probabilities, *probabilities)
         super().__init__(four_vector)
+
+class WangLinInvincible(MemoryOnePlayer):
+    """Invicible strategy from Wang Lin's paper.
+
+    Names:
+
+    - WangLinInvincible: Selena Linden
+    """
+
+    name = "WangLinInvincible"
+
+    def __init__(self, initial: Action = D) -> None:
+        four_vector = (0.9, 0.7, 0.2, 0)
+        super().__init__(four_vector)
+        self.set_four_vector(four_vector)
